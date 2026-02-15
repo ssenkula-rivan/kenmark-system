@@ -116,4 +116,27 @@ export const adminAPI = {
     api.get('/admin/audit-logs', { params })
 };
 
+export const messagesAPI = {
+  getUsers: () =>
+    api.get('/messages/users'),
+  
+  getMessages: (withUserId) =>
+    api.get('/messages', { params: { with_user_id: withUserId } }),
+  
+  sendMessage: (formData) =>
+    api.post('/messages/send', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    }),
+  
+  markAsRead: (messageId) =>
+    api.put(`/messages/${messageId}/read`),
+  
+  downloadFile: (messageId) =>
+    api.get(`/messages/${messageId}/download`, {
+      responseType: 'blob'
+    })
+};
+
 export default api;

@@ -1,0 +1,104 @@
+═══════════════════════════════════════════════════════════
+  HOW TO CREATE POSTGRESQL DATABASE ON RENDER
+═══════════════════════════════════════════════════════════
+
+STEP 1: Go to Render Dashboard
+→ Visit: https://render.com
+→ Sign in with GitHub
+→ You'll see your dashboard
+
+STEP 2: Click "New +" Button
+→ Look at top right corner
+→ Click the blue "New +" button
+→ A dropdown menu will appear
+
+STEP 3: Select PostgreSQL
+→ From the dropdown, click "PostgreSQL"
+→ You'll see a form to create the database
+
+STEP 4: Fill in Database Details
+
+Name: kenmark-db
+(This is just a label for you)
+
+Database: psdprs_db
+(This is the actual database name)
+
+User: (leave auto-generated)
+
+Region: Oregon (US West)
+(Or choose closest to you)
+
+PostgreSQL Version: 16
+(Latest version, default is fine)
+
+Datadog API Key: (leave empty)
+
+Plan: Free
+(Click "Free" - gives you 1GB storage)
+
+STEP 5: Create Database
+→ Review your settings
+→ Click "Create Database" button at bottom
+→ Wait 2-3 minutes for provisioning
+→ Status will change to "Available"
+
+STEP 6: Get Connection String
+Once database is ready:
+→ Click on your database "kenmark-db"
+→ Scroll down to "Connections" section
+→ You'll see "Internal Database URL"
+→ It looks like:
+  postgres://username:password@hostname/database
+
+STEP 7: Copy the Internal Database URL
+→ Click the copy icon next to "Internal Database URL"
+→ Save it somewhere safe
+→ You'll use this when deploying your app
+
+Example format:
+postgres://kenmark_db_user:abc123xyz@dpg-xxxxx-a.oregon-postgres.render.com/psdprs_db
+
+═══════════════════════════════════════════════════════════
+  WHAT YOU'LL SEE
+═══════════════════════════════════════════════════════════
+
+After clicking "New +", you'll see options:
+✓ Web Service
+✓ Private Service  
+✓ Background Worker
+✓ Cron Job
+✓ PostgreSQL ← SELECT THIS ONE
+✓ Redis
+
+═══════════════════════════════════════════════════════════
+  IMPORTANT NOTES
+═══════════════════════════════════════════════════════════
+
+✅ Use "Internal Database URL" - NOT External
+   (Internal is faster and free)
+
+✅ Free tier includes:
+   - 1 GB storage
+   - 90 days of data retention
+   - Automatic daily backups
+   - SSL encryption
+
+✅ Database doesn't sleep
+   (Unlike web services, it's always on)
+
+✅ Your app is now compatible with PostgreSQL
+   (Works with both MySQL locally and PostgreSQL on Render)
+
+═══════════════════════════════════════════════════════════
+  NEXT STEPS
+═══════════════════════════════════════════════════════════
+
+After creating database:
+1. ✅ Database created
+2. ⏭️ Copy Internal Database URL
+3. ⏭️ Create Web Service (your app)
+4. ⏭️ Add DATABASE_URL environment variable
+5. ⏭️ Deploy!
+
+═══════════════════════════════════════════════════════════

@@ -1,44 +1,63 @@
 const mysql = require('mysql2/promise');
+const { Pool } = require('pg');
 const logger = require('../utils/logger');
 
 let pool = null;
+const isPostgres = process.env.DATABASE_URL || process.env.DB_TYPE === 'postgres';
 
 const createPool = () => {
   if (pool) {
     return pool;
   }
 
-  pool = mysql.createPool({
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT, 10),
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    waitForConnections: true,
-    connectionLimit: 100,
-    maxIdle: 50,
-    idleTimeout: 60000,
-    queueLimit: 0,
-    enableKeepAlive: true,
-    keepAliveInitialDelay: 0,
-    timezone: 'Z',
-    dateStrings: false,
-    supportBigNumbers: true,
-    bigNumberStrings: false,
-    multipleStatements: false
-  });
+  if (isPostgres) {
+    // PostgreSQL configuration (for Render)
+    pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    });
 
-  pool.on('connection', (connection) => {
-    logger.info('New database connection established', { connectionId: connection.threadId });
-  });
+    pool.on('connect', () => {
+      logger.info('New PostgreSQL connection established');
+    });
 
-  pool.on('acquire', (connection) => {
-    logger.debug('Connection acquired from pool', { connectionId: connection.threadId });
-  });
+    pool.on('error', (err) => {
+      logger.error('PostgreSQL pool error', { error: err.message });
+    });
+  } else {
+    // MySQL configuration (for local development)
+    pool = mysql.createPool({
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT, 10),
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      waitForConnections: true,
+      connectionLimit: 100,
+      maxIdle: 50,
+      idleTimeout: 60000,
+      queueLimit: 0,
+      enableKeepAlive: true,
+      keepAliveInitialDelay: 0,
+      timezone: 'Z',
+      dateStrings: false,
+      supportBigNumbers: true,
+      bigNumberStrings: false,
+      multipleStatements: false
+    });
 
-  pool.on('release', (connection) => {
-    logger.debug('Connection released to pool', { connectionId: connection.threadId });
-  });
+    pool.on('connection', (connection) => {
+      logger.info('New MySQL connection established', { connectionId: connection.threadId });
+    });
+
+    pool.on('acquire', (connection) => {
+      logger.debug('Connection acquired from pool', { connectionId: connection.threadId });
+    });
+
+    pool.on('release', (connection) => {
+      logger.debug('Connection released to pool', { connectionId: connection.threadId });
+    });
+  }
 
   return pool;
 };
@@ -46,8 +65,11 @@ const createPool = () => {
 const getConnection = async () => {
   try {
     const poolInstance = createPool();
-    const connection = await poolInstance.getConnection();
-    return connection;
+    if (isPostgres) {
+      return await poolInstance.connect();
+    } else {
+      return await poolInstance.getConnection();
+    }
   } catch (error) {
     logger.error('Failed to get database connection', { error: error.message });
     throw error;
@@ -57,37 +79,74 @@ const getConnection = async () => {
 const query = async (sql, params = []) => {
   const connection = await getConnection();
   try {
-    const [results] = await connection.execute(sql, params);
-    return results;
+    if (isPostgres) {
+      // Convert MySQL ? placeholders to PostgreSQL $1, $2, etc.
+      let pgSql = sql;
+      let paramIndex = 1;
+      pgSql = pgSql.replace(/\?/g, () => `$${paramIndex++}`);
+      
+      const result = await connection.query(pgSql, params);
+      return result.rows;
+    } else {
+      const [results] = await connection.execute(sql, params);
+      return results;
+    }
   } catch (error) {
     logger.error('Database query failed', { sql, error: error.message });
     throw error;
   } finally {
-    connection.release();
+    if (isPostgres) {
+      connection.release();
+    } else {
+      connection.release();
+    }
   }
 };
 
 const transaction = async (callback) => {
   const connection = await getConnection();
   try {
-    await connection.beginTransaction();
-    const result = await callback(connection);
-    await connection.commit();
-    return result;
+    if (isPostgres) {
+      await connection.query('BEGIN');
+      const result = await callback(connection);
+      await connection.query('COMMIT');
+      return result;
+    } else {
+      await connection.beginTransaction();
+      const result = await callback(connection);
+      await connection.commit();
+      return result;
+    }
   } catch (error) {
-    await connection.rollback();
+    if (isPostgres) {
+      await connection.query('ROLLBACK');
+    } else {
+      await connection.rollback();
+    }
     logger.error('Transaction rolled back', { error: error.message });
     throw error;
   } finally {
-    connection.release();
+    if (isPostgres) {
+      connection.release();
+    } else {
+      connection.release();
+    }
   }
 };
 
 const testConnection = async () => {
   try {
     const connection = await getConnection();
-    await connection.ping();
-    connection.release();
+    if (isPostgres) {
+      await connection.query('SELECT 1');
+    } else {
+      await connection.ping();
+    }
+    if (isPostgres) {
+      connection.release();
+    } else {
+      connection.release();
+    }
     logger.info('Database connection test successful');
     return true;
   } catch (error) {
@@ -98,7 +157,11 @@ const testConnection = async () => {
 
 const closePool = async () => {
   if (pool) {
-    await pool.end();
+    if (isPostgres) {
+      await pool.end();
+    } else {
+      await pool.end();
+    }
     pool = null;
     logger.info('Database connection pool closed');
   }

@@ -63,15 +63,20 @@ const Register = () => {
       return;
     }
 
+    if (!formData.machine_id) {
+      setError('Please select a machine');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const { confirmPassword, machine_id, ...registerData } = formData;
+      const { confirmPassword, ...registerData } = formData;
       
-      // Only include machine_id if it has a value
+      // Convert machine_id to integer
       const dataToSend = {
         ...registerData,
-        ...(machine_id && { machine_id: parseInt(machine_id) })
+        machine_id: parseInt(registerData.machine_id)
       };
       
       await axios.post('/api/register', dataToSend);
@@ -148,14 +153,15 @@ const Register = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="machine_id">Machine (Optional)</label>
+            <label htmlFor="machine_id">Machine (Required)</label>
             <select
               id="machine_id"
               name="machine_id"
               value={formData.machine_id}
               onChange={handleChange}
+              required
             >
-              <option value="">No specific machine</option>
+              <option value="">Select a machine</option>
               {machines.map((machine) => (
                 <option key={machine.id} value={machine.id}>
                   {machine.name}

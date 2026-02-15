@@ -182,10 +182,6 @@ const Chat = ({ isOpen, onClose }) => {
       setSending(false);
     }
   };
-    } finally {
-      setSending(false);
-    }
-  };
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];

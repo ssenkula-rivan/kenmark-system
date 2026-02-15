@@ -39,6 +39,7 @@ temp/
 # Documentation (exclude from git)
 *.md
 !README.md
+!LICENSE
 
 # Backups
 backups/

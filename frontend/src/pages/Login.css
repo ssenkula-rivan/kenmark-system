@@ -92,3 +92,17 @@ button[type="submit"]:disabled {
 .register-link a:hover {
   text-decoration: underline;
 }
+
+.attribution {
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.attribution strong {
+  color: #667eea;
+  font-weight: 600;
+}

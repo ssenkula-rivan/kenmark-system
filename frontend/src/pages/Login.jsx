@@ -71,6 +71,9 @@ const Login = () => {
         <div className="register-link">
           Don't have an account? <Link to="/register">Create one</Link>
         </div>
+        <div className="attribution">
+          Powered by <strong>CRANCITECH</strong>
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,25 @@
 # Print Shop Daily Production & Revenue System (PSDPRS)
 
+**© 2026 CRANCITECH - Proprietary Software**
+
 A comprehensive full-stack system for tracking daily production and revenue in print shops with support for large format printers and digital presses.
+
+## 📋 License & Usage Rights
+
+This software is **proprietary and owned by CRANCITECH**.
+
+✅ **Permitted Use:**
+- Deploy and use for your business operations
+- Create accounts and use all features
+- Modify for your internal use only
+
+❌ **Restrictions:**
+- Cannot claim ownership
+- Cannot sell or redistribute
+- Cannot remove CRANCITECH attribution
+- Cannot create competing products
+
+**See [LICENSE](LICENSE) file for complete terms.**
 
 ## Features
 

@@ -112,14 +112,32 @@ class MessagesController {
     try {
       const currentUserId = req.user.id;
       
-      // Get all users with last active timestamp
-      const users = await db.query(`
-        SELECT id, name, username, role, department, last_active,
-               TIMESTAMPDIFF(SECOND, last_active, NOW()) as seconds_ago
-        FROM users
-        WHERE id != ?
-        ORDER BY last_active DESC, name ASC
-      `, [currentUserId]);
+      // Check if using PostgreSQL or MySQL
+      const isPostgres = process.env.DATABASE_URL || process.env.DB_TYPE === 'postgres';
+      
+      let users;
+      if (isPostgres) {
+        // PostgreSQL version
+        users = await db.query(`
+          SELECT id, name, username, role, department, last_active,
+                 EXTRACT(EPOCH FROM (NOW() - last_active))::INTEGER as seconds_ago
+          FROM users
+          WHERE id != ?
+          ORDER BY last_active DESC NULLS LAST, name ASC
+        `, [currentUserId]);
+      } else {
+        // MySQL version
+        users = await db.query(`
+          SELECT id, name, username, role, department, last_active,
+                 TIMESTAMPDIFF(SECOND, last_active, NOW()) as seconds_ago
+          FROM users
+          WHERE id != ?
+          ORDER BY 
+            CASE WHEN last_active IS NULL THEN 1 ELSE 0 END,
+            last_active DESC,
+            name ASC
+        `, [currentUserId]);
+      }
 
       res.json({
         success: true,
@@ -136,7 +154,8 @@ class MessagesController {
       });
     } catch (error) {
       logger.error('Get users error', {
-        error: error.message
+        error: error.message,
+        stack: error.stack
       });
       res.status(500).json({
         success: false,

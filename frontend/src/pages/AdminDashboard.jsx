@@ -118,7 +118,9 @@ const AdminDashboard = () => {
       link.click();
       link.remove();
     } catch (err) {
-      setError('Failed to download PDF report');
+      console.error('PDF download error:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to download PDF report';
+      setError(errorMessage);
     }
   };
 
@@ -133,7 +135,9 @@ const AdminDashboard = () => {
       link.click();
       link.remove();
     } catch (err) {
-      setError('Failed to download Excel report');
+      console.error('Excel download error:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to download Excel report';
+      setError(errorMessage);
     }
   };
 

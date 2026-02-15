@@ -213,6 +213,26 @@ const migrations = isPostgres ? [
       DELETE FROM job_types 
       WHERE name IN ('A4 One-Sided', 'A4 Back-to-Back', 'A3 One-Sided', 'A3 Back-to-Back');
     `
+  },
+  {
+    name: '012_add_book_job_type',
+    up: `
+      INSERT INTO job_types (machine_type, name, unit) VALUES
+      ('digital_press', 'Book', 'piece')
+      ON CONFLICT (machine_type, name) DO NOTHING;
+      
+      INSERT INTO pricing (job_type_id, rate, rate_unit, active)
+      SELECT id, 500.00, 'per_piece', true
+      FROM job_types
+      WHERE machine_type = 'digital_press' AND name = 'Book'
+      ON CONFLICT DO NOTHING;
+    `,
+    down: `
+      DELETE FROM pricing WHERE job_type_id IN (
+        SELECT id FROM job_types WHERE name = 'Book'
+      );
+      DELETE FROM job_types WHERE name = 'Book';
+    `
   }
 ] : [
   // MySQL migrations (original)
@@ -382,6 +402,26 @@ const migrations = isPostgres ? [
       );
       DELETE FROM job_types 
       WHERE name IN ('A4 One-Sided', 'A4 Back-to-Back', 'A3 One-Sided', 'A3 Back-to-Back');
+    `
+  },
+  {
+    name: '012_add_book_job_type',
+    up: `
+      INSERT INTO job_types (machine_type, name, unit) VALUES
+      ('digital_press', 'Book', 'piece')
+      ON DUPLICATE KEY UPDATE name=name;
+      
+      INSERT INTO pricing (job_type_id, rate, rate_unit, active)
+      SELECT id, 500.00, 'per_piece', true
+      FROM job_types
+      WHERE machine_type = 'digital_press' AND name = 'Book'
+      ON DUPLICATE KEY UPDATE rate=rate;
+    `,
+    down: `
+      DELETE FROM pricing WHERE job_type_id IN (
+        SELECT id FROM job_types WHERE name = 'Book'
+      );
+      DELETE FROM job_types WHERE name = 'Book';
     `
   }
 ];

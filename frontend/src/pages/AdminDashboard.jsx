@@ -36,7 +36,6 @@ const AdminDashboard = () => {
   const [jobTypeSummary, setJobTypeSummary] = useState([]);
   const [detailedJobs, setDetailedJobs] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -342,19 +341,11 @@ const AdminDashboard = () => {
                         </td>
                         <td>
                           {u.id === user.id ? (
-                            <span style={{ color: '#666' }}>Current User</span>
+                            <span style={{ color: '#666', fontSize: '14px' }}>Current User</span>
                           ) : (
                             <button
                               onClick={() => handleDeleteUser(u.id, u.name)}
                               className="btn-delete"
-                              style={{
-                                padding: '5px 10px',
-                                backgroundColor: '#dc3545',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer'
-                              }}
                             >
                               Delete
                             </button>

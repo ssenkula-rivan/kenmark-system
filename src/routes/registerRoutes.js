@@ -42,4 +42,6 @@ router.post(
 
 router.get('/departments', registerController.getDepartments);
 
+router.get('/machines', registerController.getMachines);
+
 module.exports = router;

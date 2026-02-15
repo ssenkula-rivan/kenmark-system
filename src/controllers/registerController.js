@@ -83,7 +83,30 @@ const getDepartments = async (req, res) => {
   }
 };
 
+const getMachines = async (req, res) => {
+  try {
+    const machines = await db.query(
+      'SELECT id, name, type FROM machines WHERE status = ?',
+      ['active']
+    );
+
+    res.json({
+      success: true,
+      data: machines
+    });
+  } catch (error) {
+    logger.error('Get machines error', {
+      error: error.message
+    });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch machines'
+    });
+  }
+};
+
 module.exports = {
   register,
-  getDepartments
+  getDepartments,
+  getMachines
 };

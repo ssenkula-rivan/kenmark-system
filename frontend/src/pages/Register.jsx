@@ -34,7 +34,7 @@ const Register = () => {
 
   const fetchMachines = async () => {
     try {
-      const response = await axios.get('/api/auth/machines');
+      const response = await axios.get('/api/machines');
       setMachines(response.data.data);
     } catch (err) {
       console.error('Failed to fetch machines', err);

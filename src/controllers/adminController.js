@@ -377,7 +377,11 @@ class AdminController {
           u.created_at
         FROM users u
         LEFT JOIN machines m ON u.machine_id = m.id
-        ORDER BY u.last_active DESC NULLS LAST, u.role, u.name
+        ORDER BY 
+          CASE WHEN u.last_active IS NULL THEN 1 ELSE 0 END,
+          u.last_active DESC,
+          u.role,
+          u.name
       `);
 
       return res.status(200).json({

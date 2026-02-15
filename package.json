@@ -4,7 +4,7 @@
   "description": "Print Shop Daily Production & Revenue System - Backend",
   "main": "src/server.js",
   "scripts": {
-    "start": "npm run migrate:safe && npm run seed:safe && node src/server.js",
+    "start": "node src/migrations/run.js --seed && node src/server.js",
     "dev": "nodemon src/server.js",
     "build": "cd frontend && npm install --production=false --legacy-peer-deps && npm run build",
     "prod": "pm2 start ecosystem.config.js --env production",

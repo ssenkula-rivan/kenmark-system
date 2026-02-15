@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const db = require('../config/database');
 const config = require('../config/env');
 const logger = require('../utils/logger');
+const { recordLoginAttempt } = require('../middleware/loginAttempts');
 
 class AuthController {
   async login(req, res) {
@@ -23,6 +24,7 @@ class AuthController {
 
       if (users.length === 0) {
         logger.warn('Login failed: User not found', { username, ip: req.ip });
+        recordLoginAttempt(username, req.ip, false);
         return res.status(401).json({
           success: false,
           message: 'Invalid credentials'
@@ -34,11 +36,23 @@ class AuthController {
 
       if (!isPasswordValid) {
         logger.warn('Login failed: Invalid password', { username, userId: user.id, ip: req.ip });
+        const attemptResult = recordLoginAttempt(username, req.ip, false);
+        
+        if (attemptResult.locked) {
+          return res.status(429).json({
+            success: false,
+            message: 'Account locked due to too many failed login attempts. Please try again in 30 minutes.'
+          });
+        }
+        
         return res.status(401).json({
           success: false,
-          message: 'Invalid credentials'
+          message: `Invalid credentials. ${attemptResult.remainingAttempts} attempts remaining.`
         });
       }
+
+      // Record successful login
+      recordLoginAttempt(username, req.ip, true);
 
       const token = jwt.sign(
         {

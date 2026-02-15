@@ -7,6 +7,14 @@ const config = require('./config/env');
 const logger = require('./utils/logger');
 const errorHandler = require('./middleware/errorHandler');
 const updateActivity = require('./middleware/updateActivity');
+const { rateLimiter } = require('./middleware/rateLimiter');
+const { sanitizeInput } = require('./middleware/sanitizer');
+const { 
+  securityHeaders, 
+  corsMiddleware, 
+  securityLogger, 
+  suspiciousActivityDetector 
+} = require('./middleware/security');
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
@@ -17,38 +25,36 @@ const messagesRoutes = require('./routes/messagesRoutes');
 
 const app = express();
 
-// Security middleware
-app.use(helmet());
-app.use(cors({
-  origin: config.cors.origin,
-  credentials: true
+// Trust proxy (for Render and other reverse proxies)
+app.set('trust proxy', 1);
+
+// Security headers (must be first)
+app.use(securityHeaders);
+
+// CORS with strict origin checking
+app.use(corsMiddleware);
+
+// Helmet for additional security
+app.use(helmet({
+  contentSecurityPolicy: false, // We set our own CSP
+  crossOriginEmbedderPolicy: false
 }));
+
+// Compression
 app.use(compression());
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: config.rateLimit.windowMs,
-  max: config.rateLimit.max,
-  message: {
-    success: false,
-    message: 'Too many requests, please try again later'
-  }
-});
-app.use(limiter);
+// Body parsing with size limits
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Body parsing with increased limits for heavy files
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// Security logging
+app.use(securityLogger);
 
-// Request logging
-app.use((req, res, next) => {
-  logger.debug('Incoming request', {
-    method: req.method,
-    path: req.path,
-    ip: req.ip
-  });
-  next();
-});
+// Suspicious activity detection
+app.use(suspiciousActivityDetector);
+
+// Input sanitization
+app.use(sanitizeInput);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -59,12 +65,12 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api', registerRoutes);
-app.use('/api/jobs', updateActivity, jobsRoutes);
-app.use('/api/admin', updateActivity, adminRoutes);
-app.use('/api/messages', updateActivity, messagesRoutes);
+// API Routes with rate limiting
+app.use('/api/auth', rateLimiter('login'), authRoutes);
+app.use('/api', rateLimiter('api'), registerRoutes);
+app.use('/api/jobs', rateLimiter('api'), updateActivity, jobsRoutes);
+app.use('/api/admin', rateLimiter('strict'), updateActivity, adminRoutes);
+app.use('/api/messages', rateLimiter('upload'), updateActivity, messagesRoutes);
 
 // Heartbeat endpoint for activity tracking
 const { authenticate } = require('./middleware/auth');

@@ -4,10 +4,12 @@ const authController = require('../controllers/authController');
 const { authenticate } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 const { auditLog } = require('../middleware/auditLog');
+const { checkLoginAllowed } = require('../middleware/loginAttempts');
 
 const router = express.Router();
 
 router.post('/login',
+  checkLoginAllowed,
   [
     body('username')
       .trim()

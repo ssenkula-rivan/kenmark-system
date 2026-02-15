@@ -66,8 +66,15 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const { confirmPassword, ...registerData } = formData;
-      await axios.post('/api/register', registerData);
+      const { confirmPassword, machine_id, ...registerData } = formData;
+      
+      // Only include machine_id if it has a value
+      const dataToSend = {
+        ...registerData,
+        ...(machine_id && { machine_id: parseInt(machine_id) })
+      };
+      
+      await axios.post('/api/register', dataToSend);
       
       alert('Registration successful! Please login.');
       navigate('/login');

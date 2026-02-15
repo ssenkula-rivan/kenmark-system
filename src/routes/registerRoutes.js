@@ -32,7 +32,7 @@ router.post(
       .notEmpty()
       .withMessage('Department is required'),
     body('machine_id')
-      .optional()
+      .optional({ checkFalsy: true })
       .isInt({ min: 1 })
       .withMessage('Invalid machine ID')
   ],

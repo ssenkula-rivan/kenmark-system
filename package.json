@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "build": "cd frontend && npm install --legacy-peer-deps && npm run build",
+    "build": "cd frontend && npm install --production=false --legacy-peer-deps && npm run build",
     "prod": "pm2 start ecosystem.config.js --env production",
     "prod:stop": "pm2 stop psdprs-backend",
     "prod:restart": "pm2 restart psdprs-backend",

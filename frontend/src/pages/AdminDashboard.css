@@ -359,12 +359,56 @@ tbody tr:hover {
 }
 
 .active-user-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px 12px;
-  background: #4caf50;
-  color: white;
   border-radius: 16px;
   font-size: 13px;
   font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.active-user-tag.online {
+  background: #4caf50;
+  color: white;
+}
+
+.active-user-tag.offline {
+  background: #e0e0e0;
+  color: #666;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.online {
+  background: #fff;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+  animation: pulse 2s infinite;
+}
+
+.status-dot.offline {
+  background: #999;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.time-ago {
+  font-size: 11px;
+  opacity: 0.8;
+  margin-left: 4px;
 }
 
 .no-active-users {
@@ -372,3 +416,4 @@ tbody tr:hover {
   font-size: 14px;
   font-style: italic;
 }
+

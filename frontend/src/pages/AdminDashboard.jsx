@@ -186,15 +186,28 @@ const AdminDashboard = () => {
 
         {/* Active Users Section */}
         <div className="active-users-section">
-          <h3>🟢 Active Users: {activeUsers.filter(u => u.isActive).length}</h3>
+          <h3>🟢 Active Users: {activeUsers.filter(u => u.isActive).length} / {activeUsers.length} Total</h3>
           <div className="active-users-list">
-            {activeUsers.filter(u => u.isActive).map(u => (
-              <span key={u.id} className="active-user-tag">
-                {u.name}
+            {activeUsers.map(u => (
+              <span 
+                key={u.id} 
+                className={`active-user-tag ${u.isActive ? 'online' : 'offline'}`}
+                title={u.last_active ? `Last active: ${new Date(u.last_active).toLocaleString()}` : 'Never active'}
+              >
+                <span className={`status-dot ${u.isActive ? 'online' : 'offline'}`}></span>
+                {u.name} ({u.role})
+                {u.secondsAgo !== null && (
+                  <span className="time-ago">
+                    {u.secondsAgo < 60 ? 'just now' :
+                     u.secondsAgo < 3600 ? `${Math.floor(u.secondsAgo / 60)}m ago` :
+                     u.secondsAgo < 86400 ? `${Math.floor(u.secondsAgo / 3600)}h ago` :
+                     `${Math.floor(u.secondsAgo / 86400)}d ago`}
+                  </span>
+                )}
               </span>
             ))}
-            {activeUsers.filter(u => u.isActive).length === 0 && (
-              <span className="no-active-users">No users currently active</span>
+            {activeUsers.length === 0 && (
+              <span className="no-active-users">No users in system</span>
             )}
           </div>
         </div>

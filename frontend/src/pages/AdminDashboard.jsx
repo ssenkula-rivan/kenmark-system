@@ -26,6 +26,8 @@ const AdminDashboard = () => {
   });
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [deleteAccountPassword, setDeleteAccountPassword] = useState('');
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
 
   const [dailySummary, setDailySummary] = useState(null);
   const [machineSummary, setMachineSummary] = useState([]);
@@ -33,6 +35,8 @@ const AdminDashboard = () => {
   const [activeUsers, setActiveUsers] = useState([]);
   const [jobTypeSummary, setJobTypeSummary] = useState([]);
   const [detailedJobs, setDetailedJobs] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -74,6 +78,9 @@ const AdminDashboard = () => {
       } else if (activeTab === 'jobs') {
         const response = await adminAPI.getDetailedJobs(selectedDate);
         setDetailedJobs(response.data.data);
+      } else if (activeTab === 'accounts') {
+        const response = await adminAPI.getAllUsers();
+        setAllUsers(response.data.data || []);
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load data');
@@ -166,6 +173,46 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleDeleteUser = async (userId, userName) => {
+    if (userId === user.id) {
+      alert('You cannot delete your own account from here. Use "Change Password" menu to delete your account.');
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await adminAPI.deleteUser(userId);
+      alert(`User ${userName} deleted successfully`);
+      // Reload users
+      if (activeTab === 'accounts') {
+        const response = await adminAPI.getAllUsers();
+        setAllUsers(response.data.data || []);
+      }
+      loadActiveUsers();
+    } catch (error) {
+      alert(error.response?.data?.message || 'Failed to delete user');
+    }
+  };
+
+  const handleDeleteMyAccount = async (e) => {
+    e.preventDefault();
+    
+    if (!window.confirm('Are you ABSOLUTELY sure you want to delete your account? This action CANNOT be undone!')) {
+      return;
+    }
+
+    try {
+      await authAPI.deleteAccount(deleteAccountPassword);
+      alert('Your account has been deleted. You will be logged out.');
+      logout();
+    } catch (error) {
+      setPasswordError(error.response?.data?.message || 'Failed to delete account');
+    }
+  };
+
   return (
     <div className="dashboard">
       <ConnectionStatus />
@@ -249,10 +296,77 @@ const AdminDashboard = () => {
           >
             Detailed Jobs
           </button>
+          <button
+            className={`tab ${activeTab === 'accounts' ? 'active' : ''}`}
+            onClick={() => setActiveTab('accounts')}
+          >
+            Manage Accounts
+          </button>
         </div>
 
         {loading ? (
           <div className="loading">Loading...</div>
+        ) : activeTab === 'accounts' ? (
+          <div className="summary-section">
+            <h2>Manage User Accounts</h2>
+            <div className="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Department</th>
+                    <th>Created</th>
+                    <th>Last Active</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan="8" style={{ textAlign: 'center' }}>No users found</td>
+                    </tr>
+                  ) : (
+                    allUsers.map(u => (
+                      <tr key={u.id}>
+                        <td>{u.id}</td>
+                        <td>{u.name}</td>
+                        <td>{u.username}</td>
+                        <td>{u.role}</td>
+                        <td>{u.department || 'N/A'}</td>
+                        <td>{format(new Date(u.created_at), 'yyyy-MM-dd HH:mm')}</td>
+                        <td>
+                          {u.last_active ? format(new Date(u.last_active), 'yyyy-MM-dd HH:mm') : 'Never'}
+                        </td>
+                        <td>
+                          {u.id === user.id ? (
+                            <span style={{ color: '#666' }}>Current User</span>
+                          ) : (
+                            <button
+                              onClick={() => handleDeleteUser(u.id, u.name)}
+                              className="btn-delete"
+                              style={{
+                                padding: '5px 10px',
+                                backgroundColor: '#dc3545',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         ) : activeTab === 'summary' ? (
           <>
             <div className="stats-grid">
@@ -409,46 +523,120 @@ const AdminDashboard = () => {
       {passwordModalOpen && (
         <div className="modal-overlay" onClick={() => setPasswordModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>Change Password</h2>
+            <h2>Account Settings</h2>
             {passwordError && <div className="alert alert-error">{passwordError}</div>}
             {passwordSuccess && <div className="alert alert-success">{passwordSuccess}</div>}
-            <form onSubmit={handlePasswordChange}>
-              <div className="form-group">
-                <label>Current Password</label>
-                <input
-                  type="password"
-                  value={passwordData.currentPassword}
-                  onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>New Password</label>
-                <input
-                  type="password"
-                  value={passwordData.newPassword}
-                  onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Confirm New Password</label>
-                <input
-                  type="password"
-                  value={passwordData.confirmPassword}
-                  onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="modal-actions">
-                <button type="button" onClick={() => setPasswordModalOpen(false)} className="btn-secondary">
-                  Cancel
-                </button>
-                <button type="submit" className="btn-primary">
-                  Change Password
-                </button>
-              </div>
-            </form>
+            
+            {!showDeleteAccount ? (
+              <>
+                <h3>Change Password</h3>
+                <form onSubmit={handlePasswordChange}>
+                  <div className="form-group">
+                    <label>Current Password</label>
+                    <input
+                      type="password"
+                      value={passwordData.currentPassword}
+                      onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>New Password</label>
+                    <input
+                      type="password"
+                      value={passwordData.newPassword}
+                      onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Confirm New Password</label>
+                    <input
+                      type="password"
+                      value={passwordData.confirmPassword}
+                      onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className="modal-actions">
+                    <button type="button" onClick={() => setPasswordModalOpen(false)} className="btn-secondary">
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn-primary">
+                      Change Password
+                    </button>
+                  </div>
+                </form>
+                
+                <hr style={{ margin: '20px 0', borderColor: '#ddd' }} />
+                
+                <div style={{ textAlign: 'center' }}>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setShowDeleteAccount(true);
+                      setPasswordError('');
+                      setPasswordSuccess('');
+                    }}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: '#dc3545',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Delete My Account
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 style={{ color: '#dc3545' }}>⚠️ Delete Account</h3>
+                <p style={{ color: '#666', marginBottom: '20px' }}>
+                  This action is permanent and cannot be undone. All your data will be deleted.
+                </p>
+                <form onSubmit={handleDeleteMyAccount}>
+                  <div className="form-group">
+                    <label>Enter Your Password to Confirm</label>
+                    <input
+                      type="password"
+                      value={deleteAccountPassword}
+                      onChange={(e) => setDeleteAccountPassword(e.target.value)}
+                      required
+                      placeholder="Your current password"
+                    />
+                  </div>
+                  <div className="modal-actions">
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setShowDeleteAccount(false);
+                        setDeleteAccountPassword('');
+                        setPasswordError('');
+                      }} 
+                      className="btn-secondary"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      style={{
+                        padding: '10px 20px',
+                        backgroundColor: '#dc3545',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Delete My Account
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
           </div>
         </div>
       )}

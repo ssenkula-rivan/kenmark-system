@@ -30,6 +30,8 @@ const WorkerDashboard = () => {
   });
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [deleteAccountPassword, setDeleteAccountPassword] = useState('');
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   
   // Spreadsheet rows
   const [rows, setRows] = useState([createEmptyRow()]);
@@ -297,6 +299,22 @@ const WorkerDashboard = () => {
     }
   };
 
+  const handleDeleteMyAccount = async (e) => {
+    e.preventDefault();
+    
+    if (!window.confirm('Are you ABSOLUTELY sure you want to delete your account? This action CANNOT be undone!')) {
+      return;
+    }
+
+    try {
+      await authAPI.deleteAccount(deleteAccountPassword);
+      alert('Your account has been deleted. You will be logged out.');
+      logout();
+    } catch (error) {
+      setPasswordError(error.response?.data?.message || 'Failed to delete account');
+    }
+  };
+
   const getTotalAmount = () => {
     return rows.reduce((sum, row) => sum + (parseFloat(row.amount) || 0), 0).toFixed(2);
   };
@@ -513,46 +531,120 @@ const WorkerDashboard = () => {
       {passwordModalOpen && (
         <div className="modal-overlay" onClick={() => setPasswordModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>Change Password</h2>
+            <h2>Account Settings</h2>
             {passwordError && <div className="alert alert-error">{passwordError}</div>}
             {passwordSuccess && <div className="alert alert-success">{passwordSuccess}</div>}
-            <form onSubmit={handlePasswordChange}>
-              <div className="form-group">
-                <label>Current Password</label>
-                <input
-                  type="password"
-                  value={passwordData.currentPassword}
-                  onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>New Password</label>
-                <input
-                  type="password"
-                  value={passwordData.newPassword}
-                  onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Confirm New Password</label>
-                <input
-                  type="password"
-                  value={passwordData.confirmPassword}
-                  onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="modal-actions">
-                <button type="button" onClick={() => setPasswordModalOpen(false)} className="btn-secondary">
-                  Cancel
-                </button>
-                <button type="submit" className="btn-primary">
-                  Change Password
-                </button>
-              </div>
-            </form>
+            
+            {!showDeleteAccount ? (
+              <>
+                <h3>Change Password</h3>
+                <form onSubmit={handlePasswordChange}>
+                  <div className="form-group">
+                    <label>Current Password</label>
+                    <input
+                      type="password"
+                      value={passwordData.currentPassword}
+                      onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>New Password</label>
+                    <input
+                      type="password"
+                      value={passwordData.newPassword}
+                      onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Confirm New Password</label>
+                    <input
+                      type="password"
+                      value={passwordData.confirmPassword}
+                      onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className="modal-actions">
+                    <button type="button" onClick={() => setPasswordModalOpen(false)} className="btn-secondary">
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn-primary">
+                      Change Password
+                    </button>
+                  </div>
+                </form>
+                
+                <hr style={{ margin: '20px 0', borderColor: '#ddd' }} />
+                
+                <div style={{ textAlign: 'center' }}>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setShowDeleteAccount(true);
+                      setPasswordError('');
+                      setPasswordSuccess('');
+                    }}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: '#dc3545',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Delete My Account
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 style={{ color: '#dc3545' }}>⚠️ Delete Account</h3>
+                <p style={{ color: '#666', marginBottom: '20px' }}>
+                  This action is permanent and cannot be undone. All your data will be deleted.
+                </p>
+                <form onSubmit={handleDeleteMyAccount}>
+                  <div className="form-group">
+                    <label>Enter Your Password to Confirm</label>
+                    <input
+                      type="password"
+                      value={deleteAccountPassword}
+                      onChange={(e) => setDeleteAccountPassword(e.target.value)}
+                      required
+                      placeholder="Your current password"
+                    />
+                  </div>
+                  <div className="modal-actions">
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setShowDeleteAccount(false);
+                        setDeleteAccountPassword('');
+                        setPasswordError('');
+                      }} 
+                      className="btn-secondary"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      style={{
+                        padding: '10px 20px',
+                        backgroundColor: '#dc3545',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Delete My Account
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
           </div>
         </div>
       )}

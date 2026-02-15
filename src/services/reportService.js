@@ -142,7 +142,7 @@ class ReportService {
           j.amount,
           j.created_at
         FROM jobs j
-        INNER JOIN users u ON j.worker_id = u.id
+        LEFT JOIN users u ON j.worker_id = u.id
         INNER JOIN machines m ON j.machine_id = m.id
         INNER JOIN job_types jt ON j.job_type_id = jt.id
         WHERE j.created_at BETWEEN ? AND ?

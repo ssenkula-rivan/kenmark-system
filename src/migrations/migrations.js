@@ -233,6 +233,21 @@ const migrations = isPostgres ? [
       );
       DELETE FROM job_types WHERE name = 'Book';
     `
+  },
+  {
+    name: '013_fix_user_deletion_constraints',
+    up: `
+      ALTER TABLE jobs DROP CONSTRAINT IF EXISTS jobs_worker_id_fkey;
+      ALTER TABLE jobs ALTER COLUMN worker_id DROP NOT NULL;
+      ALTER TABLE jobs ADD CONSTRAINT jobs_worker_id_fkey 
+        FOREIGN KEY (worker_id) REFERENCES users(id) ON DELETE SET NULL;
+    `,
+    down: `
+      ALTER TABLE jobs DROP CONSTRAINT IF EXISTS jobs_worker_id_fkey;
+      ALTER TABLE jobs ALTER COLUMN worker_id SET NOT NULL;
+      ALTER TABLE jobs ADD CONSTRAINT jobs_worker_id_fkey 
+        FOREIGN KEY (worker_id) REFERENCES users(id) ON DELETE RESTRICT;
+    `
   }
 ] : [
   // MySQL migrations (original)
@@ -422,6 +437,21 @@ const migrations = isPostgres ? [
         SELECT id FROM job_types WHERE name = 'Book'
       );
       DELETE FROM job_types WHERE name = 'Book';
+    `
+  },
+  {
+    name: '013_fix_user_deletion_constraints',
+    up: `
+      ALTER TABLE jobs DROP FOREIGN KEY jobs_ibfk_1;
+      ALTER TABLE jobs MODIFY worker_id INT NULL;
+      ALTER TABLE jobs ADD CONSTRAINT jobs_ibfk_1 
+        FOREIGN KEY (worker_id) REFERENCES users(id) ON DELETE SET NULL;
+    `,
+    down: `
+      ALTER TABLE jobs DROP FOREIGN KEY jobs_ibfk_1;
+      ALTER TABLE jobs MODIFY worker_id INT NOT NULL;
+      ALTER TABLE jobs ADD CONSTRAINT jobs_ibfk_1 
+        FOREIGN KEY (worker_id) REFERENCES users(id) ON DELETE RESTRICT;
     `
   }
 ];

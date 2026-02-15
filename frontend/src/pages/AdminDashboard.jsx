@@ -488,7 +488,9 @@ const AdminDashboard = () => {
                       <tr key={job.id}>
                         <td>{job.id}</td>
                         <td>{format(new Date(job.created_at), 'HH:mm:ss')}</td>
-                        <td>{job.worker_name}</td>
+                        <td style={{ color: job.worker_name ? 'inherit' : '#999', fontStyle: job.worker_name ? 'normal' : 'italic' }}>
+                          {job.worker_name || 'Deleted User'}
+                        </td>
                         <td>{job.machine_name}</td>
                         <td>{job.job_type_name}</td>
                         <td>{job.description}</td>

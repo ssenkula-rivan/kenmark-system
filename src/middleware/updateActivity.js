@@ -5,7 +5,7 @@ const updateActivity = async (req, res, next) => {
     try {
       // Update last_active timestamp asynchronously (don't wait)
       db.query('UPDATE users SET last_active = NOW() WHERE id = ?', [req.user.id])
-        .catch(err => console.error('Failed to update last_active:', err));
+        .catch(err => logger.error('Failed to update last_active', { error: err.message }));
     } catch (error) {
       // Silently fail - don't block the request
     }

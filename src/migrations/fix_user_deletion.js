@@ -46,7 +46,7 @@ async function fixUserDeletionConstraints() {
       logger.info('MySQL: Updated jobs foreign key constraint to ON DELETE SET NULL');
     }
     
-    console.log('✓ Fixed user deletion constraints - jobs will be preserved');
+    logger.info('Fixed user deletion constraints - jobs will be preserved');
   } catch (error) {
     logger.error('Failed to fix user deletion constraints', {
       error: error.message,

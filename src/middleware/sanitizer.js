@@ -15,13 +15,14 @@ function sanitizeString(str) {
 function detectSQLInjection(str) {
   if (typeof str !== 'string') return false;
   
+  // Only detect obvious SQL injection attempts, not normal queries
   const sqlPatterns = [
-    /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE)\b)/gi,
-    /(UNION\s+SELECT)/gi,
-    /(--|\#|\/\*|\*\/)/g,
-    /(\bOR\b\s+\d+\s*=\s*\d+)/gi,
-    /(\bAND\b\s+\d+\s*=\s*\d+)/gi,
-    /(;|\||&&)/g
+    /(\bUNION\b.*\bSELECT\b)/gi,
+    /(--\s|#\s|\/\*|\*\/)/g, // SQL comments
+    /(\bOR\b\s+['"]?\d+['"]?\s*=\s*['"]?\d+['"]?)/gi, // OR 1=1
+    /(\bAND\b\s+['"]?\d+['"]?\s*=\s*['"]?\d+['"]?)/gi, // AND 1=1
+    /(\bDROP\b\s+\bTABLE\b)/gi,
+    /(\bEXEC\b\s*\(|\bEXECUTE\b\s*\()/gi
   ];
   
   return sqlPatterns.some(pattern => pattern.test(str));
@@ -46,8 +47,9 @@ function sanitizeObject(obj) {
   if (typeof obj === 'string') {
     // Check for SQL injection
     if (detectSQLInjection(obj)) {
-      logger.warn('Potential SQL injection detected', { value: obj });
-      throw new Error('Invalid input detected');
+      logger.warn('Potential SQL injection detected', { value: obj.substring(0, 100) });
+      // Return sanitized string instead of throwing error
+      return sanitizeString(obj);
     }
     return sanitizeString(obj);
   }

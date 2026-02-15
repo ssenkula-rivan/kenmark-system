@@ -62,19 +62,3 @@ router.post('/delete-account',
 );
 
 module.exports = router;
-
-router.get('/machines', async (req, res) => {
-  try {
-    const db = require('../config/database');
-    const machines = await db.query('SELECT id, name, type FROM machines WHERE status = "active"');
-    res.json({
-      success: true,
-      data: machines
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch machines'
-    });
-  }
-});

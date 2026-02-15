@@ -9,8 +9,8 @@ const { exec } = require('child_process');
 
 logger.info('Running migrations with seed flag...');
 exec('node src/migrations/run.js --seed', (error, stdout, stderr) => {
-  if (stdout) console.log(stdout);
-  if (stderr) console.error(stderr);
+  if (stdout) logger.info(stdout);
+  if (stderr) logger.error(stderr);
   if (error) {
     logger.error('Seed command failed', { error: error.message });
     process.exit(1);

@@ -182,11 +182,16 @@ router.post('/users',
     body('password')
       .notEmpty()
       .withMessage('Password is required')
-      .isLength({ min: 8 })
-      .withMessage('Password must be at least 8 characters long'),
+      .isLength({ min: 6 })
+      .withMessage('Password must be at least 6 characters long'),
     body('role')
       .isIn(['admin', 'worker'])
       .withMessage('Role must be admin or worker'),
+    body('department')
+      .optional()
+      .trim()
+      .isLength({ max: 100 })
+      .withMessage('Department must not exceed 100 characters'),
     body('machine_id')
       .optional()
       .isInt({ min: 1 })

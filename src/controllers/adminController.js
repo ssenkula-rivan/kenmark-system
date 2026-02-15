@@ -289,7 +289,7 @@ class AdminController {
 
   async createUser(req, res) {
     try {
-      const { name, username, password, role, machine_id } = req.body;
+      const { name, username, password, role, machine_id, department } = req.body;
 
       if (!name || !username || !password || !role) {
         return res.status(400).json({
@@ -305,17 +305,10 @@ class AdminController {
         });
       }
 
-      if (password.length < 8) {
+      if (password.length < 6) {
         return res.status(400).json({
           success: false,
-          message: 'Password must be at least 8 characters long'
-        });
-      }
-
-      if (role === 'worker' && !machine_id) {
-        return res.status(400).json({
-          success: false,
-          message: 'Worker must be assigned to a machine'
+          message: 'Password must be at least 6 characters long'
         });
       }
 
@@ -334,14 +327,15 @@ class AdminController {
       const passwordHash = await bcrypt.hash(password, 12);
 
       const result = await db.query(
-        'INSERT INTO users (name, username, password_hash, role, machine_id) VALUES (?, ?, ?, ?, ?)',
-        [name, username, passwordHash, role, machine_id || null]
+        'INSERT INTO users (name, username, password_hash, role, department, machine_id) VALUES (?, ?, ?, ?, ?, ?)',
+        [name, username, passwordHash, role, department || null, machine_id || null]
       );
 
       logger.info('User created', {
         userId: result.insertId,
         username,
         role,
+        department,
         createdBy: req.user.id
       });
 
@@ -352,7 +346,8 @@ class AdminController {
           id: result.insertId,
           name,
           username,
-          role
+          role,
+          department
         }
       });
     } catch (error) {

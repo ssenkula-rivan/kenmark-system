@@ -98,19 +98,41 @@ process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 process.on('uncaughtException', (error) => {
-  logger.error('Uncaught Exception', {
+  logger.error('Uncaught Exception - System will attempt to recover', {
     error: error.message,
     stack: error.stack
   });
-  gracefulShutdown('UNCAUGHT_EXCEPTION');
+  
+  // Don't exit immediately - try to recover
+  setTimeout(() => {
+    logger.info('Attempting to continue after uncaught exception...');
+  }, 1000);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled Rejection', {
-    reason,
+  logger.error('Unhandled Rejection - System will attempt to recover', {
+    reason: reason?.message || reason,
+    stack: reason?.stack,
     promise
   });
-  gracefulShutdown('UNHANDLED_REJECTION');
+  
+  // Don't exit - log and continue
 });
+
+// Handle memory warnings
+if (process.memoryUsage) {
+  setInterval(() => {
+    const usage = process.memoryUsage();
+    const heapUsedMB = Math.round(usage.heapUsed / 1024 / 1024);
+    const heapTotalMB = Math.round(usage.heapTotal / 1024 / 1024);
+    
+    if (heapUsedMB > 400) { // Warning at 400MB
+      logger.warn('High memory usage detected', {
+        heapUsed: `${heapUsedMB}MB`,
+        heapTotal: `${heapTotalMB}MB`
+      });
+    }
+  }, 60000); // Check every minute
+}
 
 startServer();

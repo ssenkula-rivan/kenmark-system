@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { authAPI, jobsAPI } from '../services/api';
+import { offlineStorage } from '../utils/offlineStorage';
 import { format } from 'date-fns';
 import Chat from '../components/Chat';
 import ConnectionStatus from '../components/ConnectionStatus';
@@ -46,7 +47,44 @@ const WorkerDashboard = () => {
       }
     }, 15000); // Every 15 seconds
 
-    return () => clearInterval(heartbeat);
+    // Sync offline data when online
+    const syncOfflineData = async () => {
+      if (navigator.onLine) {
+        const pendingJobs = offlineStorage.getPendingJobs();
+        if (pendingJobs.length > 0) {
+          console.log(`Syncing ${pendingJobs.length} offline jobs...`);
+          let syncedCount = 0;
+          
+          for (const job of pendingJobs) {
+            try {
+              await jobsAPI.create(job);
+              syncedCount++;
+            } catch (err) {
+              console.error('Failed to sync job:', err);
+              break; // Stop syncing if one fails
+            }
+          }
+          
+          if (syncedCount === pendingJobs.length) {
+            offlineStorage.clearPendingJobs();
+            setSuccess(`${syncedCount} offline job(s) synced successfully!`);
+            loadDailyTotal();
+            loadRecentJobs();
+          }
+        }
+      }
+    };
+
+    // Sync on mount
+    syncOfflineData();
+
+    // Sync when connection is restored
+    window.addEventListener('online', syncOfflineData);
+
+    return () => {
+      clearInterval(heartbeat);
+      window.removeEventListener('online', syncOfflineData);
+    };
   }, []);
 
   function createEmptyRow() {
@@ -160,6 +198,7 @@ const WorkerDashboard = () => {
     setSubmitting(true);
     let successCount = 0;
     let failCount = 0;
+    const failedJobs = [];
     
     for (const row of validRows) {
       try {
@@ -181,16 +220,38 @@ const WorkerDashboard = () => {
       } catch (err) {
         failCount++;
         console.error('Failed to create job:', err);
+        
+        // Save to offline storage if network error
+        if (err.code === 'ERR_NETWORK' || !navigator.onLine) {
+          const jobData = {
+            job_type_id: parseInt(row.job_type_id),
+            description: row.description,
+            rate: parseFloat(row.rate)
+          };
+          
+          if (row.unit === 'sqm') {
+            jobData.width_cm = parseFloat(row.width_cm);
+            jobData.height_cm = parseFloat(row.height_cm);
+          } else {
+            jobData.quantity = parseInt(row.quantity);
+          }
+          
+          offlineStorage.savePendingJob(jobData);
+          failedJobs.push(jobData);
+        }
       }
     }
     
     setSubmitting(false);
     
     if (successCount > 0) {
-      setSuccess(`Successfully submitted ${successCount} job(s)${failCount > 0 ? `, ${failCount} failed` : ''}`);
+      setSuccess(`Successfully submitted ${successCount} job(s)${failCount > 0 ? `, ${failCount} saved offline` : ''}`);
       setRows([createEmptyRow()]);
       loadDailyTotal();
       loadRecentJobs();
+    } else if (failedJobs.length > 0) {
+      setSuccess(`${failedJobs.length} job(s) saved offline. They will be submitted when connection is restored.`);
+      setRows([createEmptyRow()]);
     } else {
       setError('Failed to submit jobs. Please try again.');
     }

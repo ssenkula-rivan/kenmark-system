@@ -76,29 +76,49 @@ const getConnection = async () => {
   }
 };
 
-const query = async (sql, params = []) => {
-  const connection = await getConnection();
-  try {
-    if (isPostgres) {
-      // Convert MySQL ? placeholders to PostgreSQL $1, $2, etc.
-      let pgSql = sql;
-      let paramIndex = 1;
-      pgSql = pgSql.replace(/\?/g, () => `$${paramIndex++}`);
+const query = async (sql, params = [], retries = 3) => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    const connection = await getConnection();
+    try {
+      if (isPostgres) {
+        // Convert MySQL ? placeholders to PostgreSQL $1, $2, etc.
+        let pgSql = sql;
+        let paramIndex = 1;
+        pgSql = pgSql.replace(/\?/g, () => `$${paramIndex++}`);
+        
+        const result = await connection.query(pgSql, params);
+        return result.rows;
+      } else {
+        const [results] = await connection.execute(sql, params);
+        return results;
+      }
+    } catch (error) {
+      logger.error('Database query failed', { 
+        sql, 
+        error: error.message,
+        attempt: `${attempt}/${retries}`
+      });
       
-      const result = await connection.query(pgSql, params);
-      return result.rows;
-    } else {
-      const [results] = await connection.execute(sql, params);
-      return results;
-    }
-  } catch (error) {
-    logger.error('Database query failed', { sql, error: error.message });
-    throw error;
-  } finally {
-    if (isPostgres) {
-      connection.release();
-    } else {
-      connection.release();
+      // Check if it's a connection error
+      const isConnectionError = 
+        error.code === 'ECONNREFUSED' || 
+        error.code === 'PROTOCOL_CONNECTION_LOST' ||
+        error.code === 'ENOTFOUND' ||
+        error.errno === 'ETIMEDOUT';
+      
+      if (isConnectionError && attempt < retries) {
+        logger.info(`Retrying query (attempt ${attempt + 1}/${retries})...`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        continue;
+      }
+      
+      throw error;
+    } finally {
+      if (isPostgres) {
+        connection.release();
+      } else {
+        connection.release();
+      }
     }
   }
 };
@@ -134,24 +154,35 @@ const transaction = async (callback) => {
   }
 };
 
-const testConnection = async () => {
-  try {
-    const connection = await getConnection();
-    if (isPostgres) {
-      await connection.query('SELECT 1');
-    } else {
-      await connection.ping();
+const testConnection = async (retries = 5, delay = 5000) => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const connection = await getConnection();
+      if (isPostgres) {
+        await connection.query('SELECT 1');
+      } else {
+        await connection.ping();
+      }
+      if (isPostgres) {
+        connection.release();
+      } else {
+        connection.release();
+      }
+      logger.info('Database connection test successful');
+      return true;
+    } catch (error) {
+      logger.error(`Database connection test failed (attempt ${attempt}/${retries})`, { 
+        error: error.message 
+      });
+      
+      if (attempt === retries) {
+        logger.error('All database connection attempts failed');
+        throw error;
+      }
+      
+      logger.info(`Retrying in ${delay/1000} seconds...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
-    if (isPostgres) {
-      connection.release();
-    } else {
-      connection.release();
-    }
-    logger.info('Database connection test successful');
-    return true;
-  } catch (error) {
-    logger.error('Database connection test failed', { error: error.message });
-    throw error;
   }
 };
 

@@ -72,6 +72,20 @@ app.post('/api/heartbeat', authenticate, updateActivity, (req, res) => {
   res.json({ success: true, timestamp: new Date().toISOString() });
 });
 
+// Client error logging endpoint
+app.post('/api/client-error', express.json(), (req, res) => {
+  const { error, errorInfo, url, timestamp } = req.body;
+  logger.error('Client-side error', {
+    error,
+    errorInfo,
+    url,
+    timestamp,
+    userAgent: req.headers['user-agent'],
+    ip: req.ip
+  });
+  res.json({ success: true });
+});
+
 // Serve static files from frontend build in production
 if (config.server.env === 'production') {
   const path = require('path');

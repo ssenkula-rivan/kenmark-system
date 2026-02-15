@@ -506,7 +506,6 @@ const WorkerDashboard = () => {
       </main>
 
       <Chat isOpen={chatOpen} onClose={() => setChatOpen(false)} />
-      <ConnectionStatus />
 
       {passwordModalOpen && (
         <div className="modal-overlay" onClick={() => setPasswordModalOpen(false)}>

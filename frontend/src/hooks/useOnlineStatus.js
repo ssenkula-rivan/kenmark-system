@@ -5,27 +5,53 @@ export const useOnlineStatus = () => {
   const [serverReachable, setServerReachable] = useState(true);
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    const handleOnline = () => {
+      setIsOnline(true);
+      console.log('Network: ONLINE');
+    };
+    
+    const handleOffline = () => {
+      setIsOnline(false);
+      console.log('Network: OFFLINE');
+    };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Check server reachability every 10 seconds
+    // Check server reachability every 30 seconds
     const checkServer = async () => {
       try {
-        const response = await fetch('/api/health', {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
+        const response = await fetch('/health', {
           method: 'GET',
-          cache: 'no-cache'
+          cache: 'no-cache',
+          signal: controller.signal
         });
-        setServerReachable(response.ok);
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+          setServerReachable(true);
+        } else {
+          setServerReachable(false);
+          console.warn('Server returned non-OK status:', response.status);
+        }
       } catch (error) {
-        setServerReachable(false);
+        // Only set as unreachable if we're actually online but can't reach server
+        if (navigator.onLine) {
+          setServerReachable(false);
+          console.warn('Server unreachable:', error.message);
+        }
       }
     };
 
+    // Initial check
     checkServer();
-    const interval = setInterval(checkServer, 10000);
+    
+    // Check every 30 seconds
+    const interval = setInterval(checkServer, 30000);
 
     return () => {
       window.removeEventListener('online', handleOnline);

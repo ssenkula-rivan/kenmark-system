@@ -51,10 +51,11 @@ uploads/
 *.mp3
 *.wav
 
-# Images (except public assets)
+# Images (except public assets and logo)
 *.png
 *.jpg
 *.jpeg
 !frontend/public/*.png
 !frontend/public/*.jpg
 !frontend/public/*.jpeg
+!src/assets/logo.jpg

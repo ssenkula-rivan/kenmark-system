@@ -36,6 +36,9 @@ const AdminDashboard = () => {
   const [jobTypeSummary, setJobTypeSummary] = useState([]);
   const [detailedJobs, setDetailedJobs] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetPassword, setResetPassword] = useState('');
 
   useEffect(() => {
     loadData();
@@ -212,6 +215,29 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleResetSystem = async (e) => {
+    e.preventDefault();
+    
+    if (!window.confirm('⚠️ WARNING: This will DELETE ALL jobs, messages, and worker accounts! This action CANNOT be undone! Are you absolutely sure?')) {
+      return;
+    }
+
+    try {
+      await adminAPI.resetSystem(resetPassword);
+      alert('System has been reset to default. All data has been cleared.');
+      setShowResetConfirm(false);
+      setResetPassword('');
+      // Reload data
+      if (activeTab === 'accounts') {
+        const response = await adminAPI.getAllUsers();
+        setAllUsers(response.data.data || []);
+      }
+      loadData();
+    } catch (error) {
+      alert(error.response?.data?.message || 'Failed to reset system');
+    }
+  };
+
   return (
     <div className="dashboard">
       <ConnectionStatus />
@@ -307,7 +333,23 @@ const AdminDashboard = () => {
           <div className="loading">Loading...</div>
         ) : activeTab === 'accounts' ? (
           <div className="summary-section">
-            <h2>Manage User Accounts</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2>Manage User Accounts</h2>
+              <button
+                onClick={() => setShowResetConfirm(true)}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold'
+                }}
+              >
+                ⚠️ Reset System to Default
+              </button>
+            </div>
             <div className="table-container">
               <table>
                 <thead>
@@ -630,6 +672,64 @@ const AdminDashboard = () => {
                 </form>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {showResetConfirm && (
+        <div className="modal-overlay" onClick={() => setShowResetConfirm(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2 style={{ color: '#dc3545' }}>⚠️ DANGER: Reset System</h2>
+            <p style={{ color: '#666', marginBottom: '20px', fontSize: '16px' }}>
+              This will permanently delete:
+            </p>
+            <ul style={{ color: '#dc3545', marginBottom: '20px', textAlign: 'left' }}>
+              <li>All jobs and job history</li>
+              <li>All messages and conversations</li>
+              <li>All worker accounts</li>
+              <li>All audit logs</li>
+            </ul>
+            <p style={{ color: '#666', marginBottom: '20px', fontWeight: 'bold' }}>
+              Only admin accounts will remain. This action CANNOT be undone!
+            </p>
+            <form onSubmit={handleResetSystem}>
+              <div className="form-group">
+                <label>Enter Your Password to Confirm</label>
+                <input
+                  type="password"
+                  value={resetPassword}
+                  onChange={(e) => setResetPassword(e.target.value)}
+                  required
+                  placeholder="Your admin password"
+                />
+              </div>
+              <div className="modal-actions">
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setShowResetConfirm(false);
+                    setResetPassword('');
+                  }} 
+                  className="btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  RESET SYSTEM
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

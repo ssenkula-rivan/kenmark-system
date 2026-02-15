@@ -119,7 +119,10 @@ export const adminAPI = {
     api.post('/admin/machines', machineData),
   
   getAuditLogs: (params) =>
-    api.get('/admin/audit-logs', { params })
+    api.get('/admin/audit-logs', { params }),
+  
+  resetSystem: (password) =>
+    api.post('/admin/system/reset', { password })
 };
 
 export const messagesAPI = {

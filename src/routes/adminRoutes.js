@@ -1,6 +1,7 @@
 const express = require('express');
 const { body, query, param } = require('express-validator');
 const adminController = require('../controllers/adminController');
+const systemController = require('../controllers/systemController');
 const { authenticate } = require('../middleware/auth');
 const { authorize } = require('../middleware/authorize');
 const { validate } = require('../middleware/validate');
@@ -280,8 +281,6 @@ router.get('/audit-logs',
   adminController.getAuditLogs
 );
 
-module.exports = router;
-
 // Backup & Restore Management
 router.post('/backup/create',
   authenticate,
@@ -361,3 +360,13 @@ router.post('/system/cleanup',
   auditLog('system_cleanup'),
   adminController.cleanupSystem
 );
+
+// System Reset (DANGEROUS - Deletes all data except admin accounts)
+router.post('/system/reset',
+  authenticate,
+  authorize('admin'),
+  auditLog('system_reset'),
+  systemController.resetSystem
+);
+
+module.exports = router;

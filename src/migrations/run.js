@@ -10,91 +10,92 @@ const seedDatabase = async () => {
   logger.info('Starting database seeding...');
   
   try {
-    await db.transaction(async (connection) => {
-      const [machines] = await connection.execute('SELECT COUNT(*) as count FROM machines');
-      
-      if (machines[0].count === 0) {
-        logger.info('Seeding machines...');
-        await connection.execute(`
-          INSERT INTO machines (name, type, status) VALUES
-          ('LARGE_FORMAT_PRINTER', 'large_format', 'active'),
-          ('DIGITAL_COLOR_PRESS_700', 'digital_press', 'active')
-        `);
-      }
+    // Check machines
+    const machines = await db.query('SELECT COUNT(*) as count FROM machines');
+    const machineCount = parseInt(machines[0].count);
+    
+    if (machineCount === 0) {
+      logger.info('Seeding machines...');
+      await db.query(`
+        INSERT INTO machines (name, type, status) VALUES
+        ('LARGE_FORMAT_PRINTER', 'large_format', 'active'),
+        ('DIGITAL_COLOR_PRESS_700', 'digital_press', 'active')
+      `);
+    }
 
-      const [machineIds] = await connection.execute('SELECT id, type FROM machines');
-      const largeFormatMachineId = machineIds.find(m => m.type === 'large_format')?.id;
-      const digitalPressMachineId = machineIds.find(m => m.type === 'digital_press')?.id;
+    const machineIds = await db.query('SELECT id, type FROM machines');
+    const largeFormatMachineId = machineIds.find(m => m.type === 'large_format')?.id;
+    const digitalPressMachineId = machineIds.find(m => m.type === 'digital_press')?.id;
 
-      const [jobTypes] = await connection.execute('SELECT COUNT(*) as count FROM job_types');
-      
-      if (jobTypes[0].count === 0) {
-        logger.info('Seeding job types...');
-        await connection.execute(`
-          INSERT INTO job_types (machine_type, name, unit) VALUES
-          ('large_format', 'Banner', 'sqm'),
-          ('large_format', 'Vinyl Sticker', 'sqm'),
-          ('large_format', 'Poster', 'sqm'),
-          ('large_format', 'Canvas Print', 'sqm'),
-          ('digital_press', 'Business Cards', 'piece'),
-          ('digital_press', 'Flyers', 'piece'),
-          ('digital_press', 'Brochures', 'piece'),
-          ('digital_press', 'Booklets', 'piece')
-        `);
-      }
+    // Check job types
+    const jobTypes = await db.query('SELECT COUNT(*) as count FROM job_types');
+    const jobTypeCount = parseInt(jobTypes[0].count);
+    
+    if (jobTypeCount === 0) {
+      logger.info('Seeding job types...');
+      await db.query(`
+        INSERT INTO job_types (machine_type, name, unit) VALUES
+        ('large_format', 'Banner', 'sqm'),
+        ('large_format', 'Vinyl Sticker', 'sqm'),
+        ('large_format', 'Poster', 'sqm'),
+        ('large_format', 'Canvas Print', 'sqm'),
+        ('digital_press', 'Business Cards', 'piece'),
+        ('digital_press', 'Flyers', 'piece'),
+        ('digital_press', 'Brochures', 'piece'),
+        ('digital_press', 'Booklets', 'piece')
+      `);
+    }
 
-      const [jobTypeRecords] = await connection.execute('SELECT id, machine_type, unit FROM job_types');
+    const jobTypeRecords = await db.query('SELECT id, machine_type, unit FROM job_types');
+    
+    // Check pricing
+    const pricing = await db.query('SELECT COUNT(*) as count FROM pricing');
+    const pricingCount = parseInt(pricing[0].count);
+    
+    if (pricingCount === 0) {
+      logger.info('Seeding pricing...');
       
-      const [pricing] = await connection.execute('SELECT COUNT(*) as count FROM pricing');
-      
-      if (pricing[0].count === 0) {
-        logger.info('Seeding pricing...');
-        const pricingInserts = [];
-        
-        for (const jobType of jobTypeRecords) {
-          const rate = jobType.unit === 'sqm' ? 50.00 : 0.50;
-          const rateUnit = jobType.unit === 'sqm' ? 'per_sqm' : 'per_piece';
-          pricingInserts.push([jobType.id, rate, rateUnit, true]);
-        }
-        
-        await connection.query(
-          'INSERT INTO pricing (job_type_id, rate, rate_unit, active) VALUES ?',
-          [pricingInserts]
+      for (const jobType of jobTypeRecords) {
+        const rate = jobType.unit === 'sqm' ? 50.00 : 0.50;
+        const rateUnit = jobType.unit === 'sqm' ? 'per_sqm' : 'per_piece';
+        await db.query(
+          'INSERT INTO pricing (job_type_id, rate, rate_unit, active) VALUES (?, ?, ?, ?)',
+          [jobType.id, rate, rateUnit, true]
         );
       }
+    }
 
-      const [users] = await connection.execute('SELECT COUNT(*) as count FROM users');
+    // Check users
+    const users = await db.query('SELECT COUNT(*) as count FROM users');
+    const userCount = parseInt(users[0].count);
+    
+    if (userCount === 0) {
+      logger.info('Seeding users...');
+      const adminPasswordHash = await bcrypt.hash('admin123', 12);
+      const worker1PasswordHash = await bcrypt.hash('worker123', 12);
+      const worker2PasswordHash = await bcrypt.hash('worker123', 12);
       
-      if (users[0].count === 0) {
-        logger.info('Seeding users...');
-        const adminPasswordHash = await bcrypt.hash('admin123', 12);
-        const worker1PasswordHash = await bcrypt.hash('worker123', 12);
-        const worker2PasswordHash = await bcrypt.hash('worker123', 12);
-        
-        await connection.execute(`
-          INSERT INTO users (name, username, password_hash, role, machine_id) VALUES
-          ('Admin User', 'admin', ?, 'admin', NULL),
-          ('Worker One', 'worker1', ?, 'worker', ?),
-          ('Worker Two', 'worker2', ?, 'worker', ?)
-        `, [
-          adminPasswordHash,
-          worker1PasswordHash,
-          largeFormatMachineId,
-          worker2PasswordHash,
-          digitalPressMachineId
-        ]);
-        
-        logger.warn('DEFAULT CREDENTIALS CREATED - CHANGE IMMEDIATELY IN PRODUCTION:');
-        logger.warn('Admin: username=admin, password=admin123');
-        logger.warn('Worker1: username=worker1, password=worker123');
-        logger.warn('Worker2: username=worker2, password=worker123');
-      }
-    });
+      await db.query(`
+        INSERT INTO users (name, username, password_hash, role, machine_id) VALUES
+        (?, ?, ?, ?, ?),
+        (?, ?, ?, ?, ?),
+        (?, ?, ?, ?, ?)
+      `, [
+        'Admin User', 'admin', adminPasswordHash, 'admin', null,
+        'Worker One', 'worker1', worker1PasswordHash, 'worker', largeFormatMachineId,
+        'Worker Two', 'worker2', worker2PasswordHash, 'worker', digitalPressMachineId
+      ]);
+      
+      logger.warn('DEFAULT CREDENTIALS CREATED - CHANGE IMMEDIATELY IN PRODUCTION:');
+      logger.warn('Admin: username=admin, password=admin123');
+      logger.warn('Worker1: username=worker1, password=worker123');
+      logger.warn('Worker2: username=worker2, password=worker123');
+    }
 
     logger.info('Database seeding completed successfully');
     return true;
   } catch (error) {
-    logger.error('Seeding failed', { error: error.message });
+    logger.error('Seeding failed', { error: error.message, stack: error.stack });
     throw error;
   }
 };

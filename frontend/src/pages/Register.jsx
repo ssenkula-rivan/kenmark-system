@@ -72,7 +72,16 @@ const Register = () => {
       alert('Registration successful! Please login.');
       navigate('/login');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      const errorMsg = err.response?.data?.message || 'Registration failed';
+      const errors = err.response?.data?.errors;
+      
+      if (errors && errors.length > 0) {
+        // Show all validation errors
+        const errorList = errors.map(e => `${e.field}: ${e.message}`).join('\n');
+        setError(`${errorMsg}\n${errorList}`);
+      } else {
+        setError(errorMsg);
+      }
     } finally {
       setLoading(false);
     }

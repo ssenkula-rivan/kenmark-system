@@ -29,17 +29,22 @@ function detectSQLInjection(str) {
 }
 
 // Sanitize object recursively
-function sanitizeObject(obj) {
+function sanitizeObject(obj, parentKey = '') {
   if (obj === null || obj === undefined) return obj;
   
   if (Array.isArray(obj)) {
-    return obj.map(item => sanitizeObject(item));
+    return obj.map(item => sanitizeObject(item, parentKey));
   }
   
   if (typeof obj === 'object') {
     const sanitized = {};
     for (const [key, value] of Object.entries(obj)) {
-      sanitized[key] = sanitizeObject(value);
+      // Don't sanitize password fields
+      if (key === 'password' || key === 'currentPassword' || key === 'newPassword' || key === 'confirmPassword') {
+        sanitized[key] = value;
+      } else {
+        sanitized[key] = sanitizeObject(value, key);
+      }
     }
     return sanitized;
   }

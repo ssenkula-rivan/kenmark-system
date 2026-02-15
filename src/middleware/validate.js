@@ -18,9 +18,11 @@ const validate = (req, res, next) => {
       method: req.method
     });
 
+    // Return more detailed error message
+    const firstError = errorMessages[0];
     return res.status(400).json({
       success: false,
-      message: 'Validation failed',
+      message: `Validation failed: ${firstError.message}`,
       errors: errorMessages
     });
   }

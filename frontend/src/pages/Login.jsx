@@ -30,7 +30,12 @@ const Login = () => {
       login(userData, token);
       navigate(`/${userData.role}`, { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      // Handle rate limiting
+      if (err.response?.status === 429) {
+        setError('Too many login attempts. Please wait a few minutes and try again.');
+      } else {
+        setError(err.response?.data?.message || 'Login failed');
+      }
     } finally {
       setLoading(false);
     }

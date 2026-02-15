@@ -87,6 +87,12 @@ const Register = () => {
       const errorMsg = err.response?.data?.message || 'Registration failed';
       const errors = err.response?.data?.errors;
       
+      // Handle rate limiting
+      if (err.response?.status === 429) {
+        setError('Too many registration attempts. Please wait a few minutes and try again.');
+        return;
+      }
+      
       if (errors && errors.length > 0) {
         // Show all validation errors
         const errorList = errors.map(e => `${e.field}: ${e.message}`).join('\n');

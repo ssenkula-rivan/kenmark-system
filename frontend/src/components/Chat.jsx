@@ -18,6 +18,7 @@ const Chat = ({ isOpen, onClose }) => {
   const audioRef = useRef(null);
   const sendAudioRef = useRef(null);
   const [notificationPermission, setNotificationPermission] = useState(Notification.permission);
+  const [rateLimitError, setRateLimitError] = useState(false);
 
   // Request notification permission on mount
   useEffect(() => {
@@ -32,6 +33,11 @@ const Chat = ({ isOpen, onClose }) => {
   // Global message checker (runs even when chat is closed)
   useEffect(() => {
     const checkNewMessages = async () => {
+      if (rateLimitError) {
+        // Skip checking if we're rate limited
+        return;
+      }
+      
       try {
         const response = await api.get('/messages');
         const allMessages = response.data.data;
@@ -60,8 +66,16 @@ const Chat = ({ isOpen, onClose }) => {
         }
         
         setLastGlobalCheck(newMessagesCount);
+        setRateLimitError(false);
       } catch (error) {
-        console.error('Failed to check messages:', error);
+        if (error.response?.status === 429) {
+          console.warn('Rate limited - pausing message checks');
+          setRateLimitError(true);
+          // Resume after 30 seconds
+          setTimeout(() => setRateLimitError(false), 30000);
+        } else {
+          console.error('Failed to check messages:', error);
+        }
       }
     };
 
@@ -70,7 +84,7 @@ const Chat = ({ isOpen, onClose }) => {
     checkNewMessages(); // Initial check
 
     return () => clearInterval(interval);
-  }, [user.id, lastGlobalCheck, notificationPermission, isOpen]);
+  }, [user.id, lastGlobalCheck, notificationPermission, isOpen, rateLimitError]);
 
   useEffect(() => {
     if (isOpen) {
@@ -216,7 +230,7 @@ const Chat = ({ isOpen, onClose }) => {
 
   return (
     <>
-      <audio ref={audioRef} src="/notification.mp3" preload="auto" />
+      <audio ref={audioRef} src="/c.mp3" preload="auto" />
       <audio ref={sendAudioRef} src="/send.mp3" preload="auto" />
       <div className="chat-overlay">
         <div className="chat-container">

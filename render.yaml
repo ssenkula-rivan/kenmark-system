@@ -1,0 +1,52 @@
+services:
+  # Backend API Service
+  - type: web
+    name: kenmark-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: DB_HOST
+        fromDatabase:
+          name: kenmark-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: kenmark-db
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: kenmark-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: kenmark-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: kenmark-db
+          property: database
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: CORS_ORIGIN
+        value: "*"
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 1000
+      - key: LOG_LEVEL
+        value: info
+
+databases:
+  - name: kenmark-db
+    databaseName: psdprs_db
+    plan: free
+    region: oregon

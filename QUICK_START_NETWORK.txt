@@ -1,0 +1,68 @@
+════════════════════════════════════════════════════════════════
+     PRINT SHOP SYSTEM - NETWORK ACCESS QUICK START            
+════════════════════════════════════════════════════════════════
+
+📍 YOUR NETWORK URL
+
+   http://192.168.118.24:3000
+
+   Share this URL with any computer on your network!
+
+
+🚀 HOW TO START THE SYSTEM
+
+On the SERVER computer (this Mac):
+
+   Terminal 1 - Backend:
+   $ npm start
+
+   Terminal 2 - Frontend:
+   $ cd frontend && npm run dev
+
+
+💻 HOW TO ACCESS FROM OTHER COMPUTERS
+
+1. Make sure the other computer is on the SAME WiFi/Network
+
+2. Open any web browser (Chrome, Safari, Firefox, Edge)
+
+3. Type in the address bar:
+   http://192.168.118.24:3000
+
+4. Login with your credentials:
+   - Admin: admin / admin123
+   - Worker: worker1 / worker123
+
+
+📱 WORKS ON
+
+✅ Windows PCs
+✅ Mac computers
+✅ Linux computers
+✅ Tablets (iPad, Android)
+✅ Smartphones (iPhone, Android)
+
+
+🔧 TROUBLESHOOTING
+
+Can't connect?
+
+1. Check both servers are running on this Mac
+2. Verify other computer is on same WiFi
+3. Try accessing http://localhost:3000 on this Mac first
+4. Check firewall settings (System Preferences > Security)
+5. Get fresh IP address: ./get-network-url.sh
+
+
+⚠️  OFFLINE MODE
+
+Orange warning icon (⚠️) appears when:
+- Server is unreachable
+- Network connection lost
+
+System continues to work offline and syncs when reconnected.
+
+
+📞 NEED HELP?
+
+Read full guide: NETWORK_ACCESS_GUIDE.md

@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Build
+dist/
+build/
+frontend/dist/
+frontend/build/
+
+# Coverage
+coverage/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary
+tmp/
+temp/
+
+# Documentation (exclude from git)
+*.md
+!README.md
+
+# Backups
+backups/
+
+# Uploads (user files)
+uploads/
+
+# Audio files
+*.mp3
+*.wav
+
+# Images (except public assets)
+*.png
+*.jpg
+*.jpeg
+!frontend/public/*.png
+!frontend/public/*.jpg
+!frontend/public/*.jpeg

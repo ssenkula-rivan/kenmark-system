@@ -419,20 +419,6 @@ class AdminController {
       });
     }
   }
-        data: { userId: result.insertId }
-      });
-    } catch (error) {
-      logger.error('Failed to create user', {
-        error: error.message,
-        stack: error.stack,
-        userId: req.user.id
-      });
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to create user'
-      });
-    }
-  }
 
   async getAllUsers(req, res) {
     try {

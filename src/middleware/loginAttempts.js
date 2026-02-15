@@ -4,8 +4,8 @@ const logger = require('../utils/logger');
 const loginAttempts = new Map();
 const lockedAccounts = new Map();
 
-const MAX_ATTEMPTS = 5;
-const LOCKOUT_DURATION = 30 * 60 * 1000; // 30 minutes
+const MAX_ATTEMPTS = 10;
+const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
 const ATTEMPT_WINDOW = 15 * 60 * 1000; // 15 minutes
 
 function getAttemptKey(username, ip) {

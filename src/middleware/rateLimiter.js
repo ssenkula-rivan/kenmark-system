@@ -6,10 +6,10 @@ const blockedIPs = new Map();
 
 // Configuration
 const RATE_LIMITS = {
-  login: { windowMs: 15 * 60 * 1000, maxRequests: 5 }, // 5 attempts per 15 minutes
-  api: { windowMs: 60 * 1000, maxRequests: 100 }, // 100 requests per minute
-  upload: { windowMs: 60 * 1000, maxRequests: 10 }, // 10 uploads per minute
-  strict: { windowMs: 60 * 1000, maxRequests: 30 } // 30 requests per minute for sensitive endpoints
+  login: { windowMs: 15 * 60 * 1000, maxRequests: 20 }, // 20 attempts per 15 minutes
+  api: { windowMs: 60 * 1000, maxRequests: 500 }, // 500 requests per minute
+  upload: { windowMs: 60 * 1000, maxRequests: 50 }, // 50 uploads per minute
+  strict: { windowMs: 60 * 1000, maxRequests: 200 } // 200 requests per minute for admin
 };
 
 const BLOCK_DURATION = 30 * 60 * 1000; // 30 minutes

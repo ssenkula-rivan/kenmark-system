@@ -225,7 +225,7 @@ const AdminDashboard = () => {
             <img src="/messages-ios-seeklogo.png" alt="Messages" className="chat-icon" />
             {unreadCount > 0 && <span className="unread-badge">{unreadCount}</span>}
           </button>
-          <button onClick={() => setPasswordModalOpen(true)} className="btn-secondary">Change Password</button>
+          <button onClick={() => setPasswordModalOpen(true)} className="btn-secondary">Account Settings</button>
           <button onClick={handleLogout} className="btn-logout">Logout</button>
         </div>
       </header>

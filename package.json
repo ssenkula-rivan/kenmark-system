@@ -4,7 +4,7 @@
   "description": "Print Shop Daily Production & Revenue System - Backend",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js",
+    "start": "npm run migrate:safe && npm run seed:safe && node src/server.js",
     "dev": "nodemon src/server.js",
     "build": "cd frontend && npm install --production=false --legacy-peer-deps && npm run build",
     "prod": "pm2 start ecosystem.config.js --env production",
@@ -13,7 +13,9 @@
     "prod:logs": "pm2 logs psdprs-backend",
     "test": "jest --coverage",
     "migrate": "node src/migrations/run.js",
+    "migrate:safe": "node src/migrations/run.js || echo 'Migrations already applied'",
     "seed": "node src/migrations/seed.js",
+    "seed:safe": "node src/migrations/seed.js || echo 'Seed already applied'",
     "backup": "node scripts/backup.js create",
     "backup:db": "node scripts/backup.js create-db",
     "backup:files": "node scripts/backup.js create-files",

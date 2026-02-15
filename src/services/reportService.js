@@ -171,7 +171,7 @@ class ReportService {
 
         doc.on('data', chunk => chunks.push(chunk));
 
-        doc.fontSize(20).text('Print Shop Daily Report', { align: 'center' });
+        doc.fontSize(20).text('Kenmark System Daily Report', { align: 'center' });
         doc.fontSize(12).text(`Date: ${date}`, { align: 'center' });
         doc.moveDown(2);
 
@@ -234,7 +234,7 @@ class ReportService {
         ]);
 
         const workbook = new ExcelJS.Workbook();
-        workbook.creator = 'PSDPRS';
+        workbook.creator = 'Kenmark System';
         workbook.created = new Date();
 
         const summarySheet = workbook.addWorksheet('Daily Summary');

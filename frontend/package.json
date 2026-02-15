@@ -1,7 +1,7 @@
 {
-  "name": "psdprs-frontend",
+  "name": "kenmark-frontend",
   "version": "1.0.0",
-  "description": "Print Shop Daily Production & Revenue System - Frontend",
+  "description": "Kenmark System - Frontend",
   "private": true,
   "type": "module",
   "scripts": {

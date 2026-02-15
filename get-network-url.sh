@@ -3,7 +3,7 @@
 # Script to get the network URL for accessing the system from other computers
 
 echo "=========================================="
-echo "  Print Shop System - Network Access"
+echo "  Kenmark System - Network Access"
 echo "=========================================="
 echo ""
 

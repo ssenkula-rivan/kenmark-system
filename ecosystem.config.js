@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'psdprs-backend',
+      name: 'kenmark-backend',
       script: './src/server.js',
       instances: 1,
       exec_mode: 'fork',
@@ -42,7 +42,7 @@ module.exports = {
       host: 'your-server.com',
       ref: 'origin/main',
       repo: 'git@github.com:your-repo.git',
-      path: '/var/www/psdprs',
+      path: '/var/www/kenmark',
       'post-deploy': 'npm install && pm2 reload ecosystem.config.js --env production'
     }
   }

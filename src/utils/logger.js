@@ -19,7 +19,7 @@ const logFormat = winston.format.combine(
 const logger = winston.createLogger({
   level: logLevel,
   format: logFormat,
-  defaultMeta: { service: 'psdprs-backend' },
+  defaultMeta: { service: 'kenmark-backend' },
   transports: [
     new winston.transports.File({
       filename: path.join(logsDir, 'error.log'),

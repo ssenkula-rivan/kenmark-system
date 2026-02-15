@@ -8,7 +8,7 @@ let server;
 
 const startServer = async () => {
   try {
-    logger.info('Starting PSDPRS Backend Server...');
+    logger.info('Starting Kenmark System Backend Server...');
 
     logger.info('Testing database connection...');
     await db.testConnection();

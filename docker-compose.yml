@@ -3,7 +3,7 @@ version: '3.8'
 services:
   mysql:
     image: mysql:8.0
-    container_name: psdprs-mysql
+    container_name: kenmark-mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
@@ -13,13 +13,13 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
-      - psdprs-network
+      - kenmark-network
 
   backend:
     build:
       context: .
       dockerfile: Dockerfile.backend
-    container_name: psdprs-backend
+    container_name: kenmark-backend
     restart: unless-stopped
     ports:
       - "5000:5000"
@@ -36,7 +36,7 @@ services:
     depends_on:
       - mysql
     networks:
-      - psdprs-network
+      - kenmark-network
     volumes:
       - ./logs:/app/logs
 
@@ -44,18 +44,18 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: psdprs-frontend
+    container_name: kenmark-frontend
     restart: unless-stopped
     ports:
       - "3000:80"
     depends_on:
       - backend
     networks:
-      - psdprs-network
+      - kenmark-network
 
 volumes:
   mysql_data:
 
 networks:
-  psdprs-network:
+  kenmark-network:
     driver: bridge

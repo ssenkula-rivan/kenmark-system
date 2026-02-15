@@ -31,6 +31,6 @@ services:
 
 databases:
   - name: kenmark-db
-    databaseName: psdprs_db
+    databaseName: kenmark_db
     plan: free
     region: oregon

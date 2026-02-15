@@ -6,10 +6,12 @@ import { format } from 'date-fns';
 import Chat from '../components/Chat';
 import ConnectionStatus from '../components/ConnectionStatus';
 import Clock from '../components/Clock';
+import { useUnreadMessages } from '../hooks/useUnreadMessages';
 import './WorkerDashboard.css';
 
 const WorkerDashboard = () => {
   const { user, logout } = useAuth();
+  const unreadCount = useUnreadMessages(user?.id);
   const [jobTypes, setJobTypes] = useState([]);
   const [dailyTotal, setDailyTotal] = useState(null);
   const [recentJobs, setRecentJobs] = useState([]);
@@ -311,6 +313,7 @@ const WorkerDashboard = () => {
           {user.department && <span className="department-badge">{user.department}</span>}
           <button onClick={() => setChatOpen(true)} className="btn-chat">
             <img src="/messages-ios-seeklogo.png" alt="Messages" className="chat-icon" />
+            {unreadCount > 0 && <span className="unread-badge">{unreadCount}</span>}
           </button>
           <button onClick={() => setPasswordModalOpen(true)} className="btn-secondary">Change Password</button>
           <button onClick={handleLogout} className="btn-logout">Logout</button>

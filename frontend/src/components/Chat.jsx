@@ -14,8 +14,63 @@ const Chat = ({ isOpen, onClose }) => {
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const [lastMessageCount, setLastMessageCount] = useState(0);
+  const [lastGlobalCheck, setLastGlobalCheck] = useState(0);
   const audioRef = useRef(null);
   const sendAudioRef = useRef(null);
+  const [notificationPermission, setNotificationPermission] = useState(Notification.permission);
+
+  // Request notification permission on mount
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(permission => {
+        setNotificationPermission(permission);
+        console.log('Notification permission:', permission);
+      });
+    }
+  }, []);
+
+  // Global message checker (runs even when chat is closed)
+  useEffect(() => {
+    const checkNewMessages = async () => {
+      try {
+        const response = await api.get('/messages');
+        const allMessages = response.data.data;
+        const newMessagesCount = allMessages.length;
+        
+        if (newMessagesCount > lastGlobalCheck && lastGlobalCheck > 0) {
+          const latestMessage = allMessages[0]; // Most recent message
+          
+          // Only notify if message is for current user and not from current user
+          if (latestMessage.receiver_id === user.id && latestMessage.sender_id !== user.id) {
+            // Play sound
+            if (audioRef.current) {
+              audioRef.current.play().catch(err => console.log('Audio play failed:', err));
+            }
+            
+            // Show browser notification
+            if (notificationPermission === 'granted' && !isOpen) {
+              new Notification('New Message', {
+                body: `${latestMessage.sender_name}: ${latestMessage.message || 'Sent a file'}`,
+                icon: '/messages-ios-seeklogo.png',
+                tag: `message-${latestMessage.id}`,
+                requireInteraction: false
+              });
+            }
+          }
+        }
+        
+        setLastGlobalCheck(newMessagesCount);
+      } catch (error) {
+        console.error('Failed to check messages:', error);
+      }
+    };
+
+    // Check every 3 seconds
+    const interval = setInterval(checkNewMessages, 3000);
+    checkNewMessages(); // Initial check
+
+    return () => clearInterval(interval);
+  }, [user.id, lastGlobalCheck, notificationPermission, isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -104,9 +159,12 @@ const Chat = ({ isOpen, onClose }) => {
         }
       });
 
-      // Play send sound
+      // Play send sound with user interaction
       if (sendAudioRef.current) {
-        sendAudioRef.current.play().catch(err => console.log('Send audio failed:', err));
+        sendAudioRef.current.currentTime = 0; // Reset to start
+        sendAudioRef.current.play()
+          .then(() => console.log('Send sound played'))
+          .catch(err => console.log('Send audio failed:', err));
       }
 
       setNewMessage('');
@@ -114,10 +172,16 @@ const Chat = ({ isOpen, onClose }) => {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-      loadMessages();
+      
+      // Reload messages immediately
+      setTimeout(() => loadMessages(), 100);
     } catch (error) {
       console.error('Failed to send message:', error);
       alert('Failed to send message');
+    } finally {
+      setSending(false);
+    }
+  };
     } finally {
       setSending(false);
     }

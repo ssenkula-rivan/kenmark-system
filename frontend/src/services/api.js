@@ -45,6 +45,9 @@ export const authAPI = {
   changePassword: (currentPassword, newPassword) =>
     api.post('/auth/change-password', { currentPassword, newPassword }),
   
+  deleteAccount: (password) =>
+    api.post('/auth/delete-account', { password }),
+  
   heartbeat: () =>
     api.post('/heartbeat')
 };
@@ -105,6 +108,9 @@ export const adminAPI = {
   
   createUser: (userData) =>
     api.post('/admin/users', userData),
+  
+  deleteUser: (userId) =>
+    api.delete(`/admin/users/${userId}`),
   
   getAllMachines: () =>
     api.get('/admin/machines'),

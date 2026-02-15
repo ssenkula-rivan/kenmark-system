@@ -348,6 +348,77 @@ class AdminController {
       return res.status(201).json({
         success: true,
         message: 'User created successfully',
+        data: {
+          id: result.insertId,
+          name,
+          username,
+          role
+        }
+      });
+    } catch (error) {
+      logger.error('Failed to create user', {
+        error: error.message,
+        stack: error.stack,
+        userId: req.user.id
+      });
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to create user'
+      });
+    }
+  }
+
+  async deleteUser(req, res) {
+    try {
+      const { id } = req.params;
+      const adminId = req.user.id;
+
+      // Prevent admin from deleting themselves
+      if (parseInt(id) === adminId) {
+        return res.status(400).json({
+          success: false,
+          message: 'You cannot delete your own account. Use self-delete instead.'
+        });
+      }
+
+      // Check if user exists
+      const users = await db.query('SELECT id, username, role FROM users WHERE id = ?', [id]);
+      
+      if (users.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      const userToDelete = users[0];
+
+      // Delete the user (CASCADE will handle related records)
+      await db.query('DELETE FROM users WHERE id = ?', [id]);
+
+      logger.info('User deleted by admin', {
+        deletedUserId: id,
+        deletedUsername: userToDelete.username,
+        deletedRole: userToDelete.role,
+        deletedBy: adminId
+      });
+
+      return res.json({
+        success: true,
+        message: 'User deleted successfully'
+      });
+    } catch (error) {
+      logger.error('Failed to delete user', {
+        error: error.message,
+        stack: error.stack,
+        userId: req.user.id
+      });
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to delete user'
+      });
+    }
+  }
         data: { userId: result.insertId }
       });
     } catch (error) {

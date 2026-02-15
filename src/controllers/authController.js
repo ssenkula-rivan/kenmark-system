@@ -179,6 +179,68 @@ class AuthController {
       });
     }
   }
+
+  async deleteAccount(req, res) {
+    try {
+      const { password } = req.body;
+      const userId = req.user.id;
+      const username = req.user.username;
+
+      if (!password) {
+        return res.status(400).json({
+          success: false,
+          message: 'Password is required to delete account'
+        });
+      }
+
+      // Verify password
+      const users = await db.query(
+        'SELECT password_hash FROM users WHERE id = ?',
+        [userId]
+      );
+
+      if (users.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      const isPasswordValid = await bcrypt.compare(password, users[0].password_hash);
+
+      if (!isPasswordValid) {
+        logger.warn('Account deletion failed: Invalid password', {
+          userId,
+          username,
+          ip: req.ip
+        });
+        return res.status(401).json({
+          success: false,
+          message: 'Password is incorrect'
+        });
+      }
+
+      // Delete the account
+      await db.query('DELETE FROM users WHERE id = ?', [userId]);
+
+      logger.info('User deleted their own account', {
+        userId,
+        username,
+        ip: req.ip
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: 'Account deleted successfully'
+      });
+    } catch (error) {
+      logger.error('Account deletion error', { error: error.message, stack: error.stack });
+      return res.status(500).json({
+        success: false,
+        message: 'Account deletion failed'
+      });
+    }
+  }
 }
 
 module.exports = new AuthController();

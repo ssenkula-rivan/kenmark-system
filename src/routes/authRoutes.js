@@ -47,6 +47,18 @@ router.post('/change-password',
   authController.changePassword
 );
 
+router.post('/delete-account',
+  authenticate,
+  [
+    body('password')
+      .notEmpty()
+      .withMessage('Password is required to delete account')
+  ],
+  validate,
+  auditLog('account_delete'),
+  authController.deleteAccount
+);
+
 module.exports = router;
 
 router.get('/machines', async (req, res) => {

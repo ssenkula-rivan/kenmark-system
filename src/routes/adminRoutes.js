@@ -197,6 +197,19 @@ router.post('/users',
   adminController.createUser
 );
 
+router.delete('/users/:id',
+  authenticate,
+  authorize('admin'),
+  [
+    param('id')
+      .isInt({ min: 1 })
+      .withMessage('Valid user ID is required')
+  ],
+  validate,
+  auditLog('user_delete'),
+  adminController.deleteUser
+);
+
 // Machines
 router.get('/machines',
   authenticate,
